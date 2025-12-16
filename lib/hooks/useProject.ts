@@ -1,95 +1,115 @@
+// =========================
+// useProjects Hook
+// =========================
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ApiData from "@/api/project";
-import {
-  Project,
-  CreateProjectInput,
-  UpdateProjectInput,
-} from "@/types/project";
+import { Project, CreateProjectInput, UpdateProjectInput } from "@/types/project";
 
 export const useProjects = (projectId?: string) => {
   const queryClient = useQueryClient();
 
-  // =========================
+  // -------------------------
   // GET ALL PROJECTS
-  // =========================
+  // -------------------------
   const projectsQuery = useQuery<Project[]>({
     queryKey: ["projects"],
     queryFn: async () => {
       const res = await ApiData.Project.getProject();
-      if (!res.data.success) {
-        throw new Error(res.data.message || "Failed to fetch projects");
-      }
-      return res.data.projects.map((p:any) => ({
+      if (!res.data.success) throw new Error(res.data.message || "Failed to fetch projects");
+
+      return res.data.projects.map((p: any) => ({
         ...p,
         _id: p._id || "",
         createdBy: p.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+        teamMembers: p.teamMembers || [],
+        invitedMembers: p.invitedMembers || [],
+        description: p.description || "",
+        color: p.color || "#7e22ce",
+        members: p.members || "",
+        status: p.status || "Active",
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
       }));
     },
   });
 
-  // =========================
+  // -------------------------
   // GET PROJECT DETAILS
-  // =========================
+  // -------------------------
   const projectDetailsQuery = useQuery<Project>({
     queryKey: ["project-details", projectId],
     queryFn: async () => {
+      if (!projectId) throw new Error("Project ID not provided");
       const res = await ApiData.Project.getProjectDetails(projectId);
-      if (!res.data.success || !res.data.project) {
-        throw new Error(res.data.message || "Failed to load project details");
-      }
+      if (!res.data.success || !res.data.project) throw new Error(res.data.message || "Failed to load project details");
 
-      const project: Project = {
-        ...res.data.project,
-        _id: res.data.project._id || "",
-        createdBy: res.data.project.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
-        teamMembers: res.data.project.teamMembers || [],
-        invitedMembers: res.data.project.invitedMembers || [],
-        description: res.data.project.description || "",
-        color: res.data.project.color || "#7e22ce",
-        members: res.data.project.members || "",
-        status: res.data.project.status || "Active",
-        createdAt: res.data.project.createdAt || new Date().toISOString(),
-        updatedAt: res.data.project.updatedAt || new Date().toISOString(),
+      const p = res.data.project;
+      return {
+        _id: p._id || "",
+        name: p.name || "Untitled",
+        title: p.title || "Untitled Project",
+        description: p.description || "",
+        color: p.color || "#7e22ce",
+        members: p.members || "",
+        createdBy: p.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+        teamMembers: p.teamMembers || [],
+        invitedMembers: p.invitedMembers || [],
+        status: p.status || "Active",
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
       };
-
-      return project;
     },
     enabled: !!projectId,
   });
 
-  // =========================
+  // -------------------------
   // GET JOINED PROJECTS
-  // =========================
+  // -------------------------
   const joinedProjectsQuery = useQuery<Project[]>({
-    queryKey: ["joined-projects"],
+    queryKey: ["joined-projects", projectId],
     queryFn: async () => {
-      // Agar getJoinedprojects argument expect karta hai, yahan userId pass karo
+      if (!projectId) throw new Error("Project ID not provided for joined projects");
       const res = await ApiData.Project.getJoinedprojects(projectId);
-      if (!res.data.success) {
-        throw new Error(res.data.message || "Failed to load joined projects");
-      }
-      return res.data.projects.map((p) => ({
+      if (!res.data.success) throw new Error(res.data.message || "Failed to fetch joined projects");
+
+      return res.data.projects.map((p: any) => ({
         ...p,
         _id: p._id || "",
         createdBy: p.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+        teamMembers: p.teamMembers || [],
+        invitedMembers: p.invitedMembers || [],
+        description: p.description || "",
+        color: p.color || "#7e22ce",
+        members: p.members || "",
+        status: p.status || "Active",
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
       }));
     },
   });
 
-  // =========================
+  // -------------------------
   // CREATE PROJECT
-  // =========================
+  // -------------------------
   const createProject = useMutation({
     mutationFn: async (data: CreateProjectInput): Promise<Project> => {
       const res = await ApiData.Project.createProject(data);
-      if (!res.data.success || !res.data.project) {
-        throw new Error(res.data.message || "Failed to create project");
-      }
+      if (!res.data.success || !res.data.project) throw new Error(res.data.message || "Failed to create project");
 
+      const p = res.data.project;
       return {
-        ...res.data.project,
-        _id: res.data.project._id || "",
-        createdBy: res.data.project.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+        _id: p._id || "",
+        name: p.name || "Untitled",
+        title: p.title || "Untitled Project",
+        description: p.description || "",
+        color: p.color || "#7e22ce",
+        members: p.members || "",
+        createdBy: p.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+        teamMembers: p.teamMembers || [],
+        invitedMembers: p.invitedMembers || [],
+        status: p.status || "Active",
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
       };
     },
     onSuccess: (newProject) => {
@@ -97,9 +117,9 @@ export const useProjects = (projectId?: string) => {
     },
   });
 
-  // =========================
+  // -------------------------
   // UPDATE PROJECT
-  // =========================
+  // -------------------------
   const updateProject = useMutation({
     mutationFn: async ({
       id,
@@ -109,14 +129,22 @@ export const useProjects = (projectId?: string) => {
       data: UpdateProjectInput;
     }): Promise<Project> => {
       const res = await ApiData.Project.updateProject(data, id);
-      if (!res.data.success || !res.data.project) {
-        throw new Error(res.data.message || "Failed to update project");
-      }
+      if (!res.data.success || !res.data.project) throw new Error(res.data.message || "Failed to update project");
 
+      const p = res.data.project;
       return {
-        ...res.data.project,
-        _id: res.data.project._id || "",
-        createdBy: res.data.project.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+        _id: p._id || "",
+        name: p.name || "Untitled",
+        title: p.title || "Untitled Project",
+        description: p.description || "",
+        color: p.color || "#7e22ce",
+        members: p.members || "",
+        createdBy: p.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+        teamMembers: p.teamMembers || [],
+        invitedMembers: p.invitedMembers || [],
+        status: p.status || "Active",
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
       };
     },
     onSuccess: (updated) => {
@@ -126,15 +154,13 @@ export const useProjects = (projectId?: string) => {
     },
   });
 
-  // =========================
+  // -------------------------
   // DELETE PROJECT
-  // =========================
+  // -------------------------
   const deleteProject = useMutation({
     mutationFn: async (id: string): Promise<string> => {
       const res = await ApiData.Project.deleteProject(id);
-      if (!res.data.success) {
-        throw new Error(res.data.message || "Failed to delete project");
-      }
+      if (!res.data.success) throw new Error(res.data.message || "Failed to delete project");
       return id;
     },
     onSuccess: (id) => {

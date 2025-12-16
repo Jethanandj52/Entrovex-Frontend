@@ -1,8 +1,8 @@
 // =========================
-// Project Type
+// Project Types
 // =========================
 export interface Member {
-  _id: string;  // mandatory
+  _id: string;
   username: string;
   email: string;
   isAdmin?: boolean;
@@ -14,7 +14,7 @@ export interface Project {
   title?: string;
   description: string;
   color: string;
-  members?: string; // optional now
+  members?: string; // optional
   createdBy: Member;
   teamMembers?: Member[];
   invitedMembers?: { email: string; status: "pending" | "accepted" | "rejected" }[];
@@ -30,14 +30,14 @@ export interface CreateProjectInput {
   name: string;
   description: string;
   color: string;
-  members: string; // Or string[] depending on your form
+  members: string;
 }
 
 export interface UpdateProjectInput {
   name?: string;
   description?: string;
   color?: string;
-  members?: string; // Or string[] depending on your form
+  members?: string;
 }
 
 // =========================
@@ -46,11 +46,11 @@ export interface UpdateProjectInput {
 export interface ProjectsResponse {
   success: boolean;
   message: string;
-  projects: Project[]; // always array
+  projects: Project[];
 }
 
 export interface SingleProjectResponse {
   success: boolean;
   message: string;
-  project: Project; // mandatory now to avoid undefined errors
+  project: Project;
 }
