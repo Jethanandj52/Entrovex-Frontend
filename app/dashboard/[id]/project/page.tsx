@@ -64,23 +64,7 @@ export default function ProjectDetailsPage() {
   }
 
   // ----------------- SAFE ASSIGNMENT -----------------
-const project: Project = {
-  _id: projectDetailsQuery.data?._id || "", // fallback to empty string
-  title: projectDetailsQuery.data?.title || "Untitled Project",
-  description: projectDetailsQuery.data?.description || "",
-  color: projectDetailsQuery.data?.color || "#7e22ce",
-  createdBy: projectDetailsQuery.data?.createdBy || {
-    _id: "",
-    username: "Unknown",
-    email: "unknown@example.com",
-  },
-  teamMembers: projectDetailsQuery.data?.teamMembers || [],
-  invitedMembers: projectDetailsQuery.data?.invitedMembers || [],
- 
-  createdAt: projectDetailsQuery.data?.createdAt || new Date().toISOString(),
-  updatedAt: projectDetailsQuery.data?.updatedAt || new Date().toISOString(),
-};
-
+ const project: Project = projectDetailsQuery.data;
 
 // safe, already checked above
   const allMembers: Member[] = [

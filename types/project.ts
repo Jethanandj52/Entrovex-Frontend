@@ -1,6 +1,7 @@
 // =========================
 // Project Types
 // =========================
+
 export interface Member {
   _id: string;
   username: string;
@@ -11,21 +12,25 @@ export interface Member {
 export interface Project {
   _id: string;
   name: string;
-  title?: string;
+  title: string;
   description: string;
   color: string;
-  members?: string; // optional
+  members?: string;
   createdBy: Member;
-  teamMembers?: Member[];
-  invitedMembers?: { email: string; status: "pending" | "accepted" | "rejected" }[];
-  status?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  teamMembers: Member[];
+  invitedMembers: {
+    email: string;
+    status: "pending" | "accepted" | "rejected";
+  }[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // =========================
 // Input Types
 // =========================
+
 export interface CreateProjectInput {
   name: string;
   description: string;
@@ -43,6 +48,7 @@ export interface UpdateProjectInput {
 // =========================
 // API Response Types
 // =========================
+
 export interface ProjectsResponse {
   success: boolean;
   message: string;
