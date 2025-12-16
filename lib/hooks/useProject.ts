@@ -27,16 +27,17 @@ export const useProjects = (projectId?: string) => {
   // GET PROJECT DETAILS
   // =========================
   const projectDetailsQuery = useQuery<Project>({
-    queryKey: ["project-details", projectId],
-    queryFn: async () => {
-      const res = await ApiData.Project.getProjectDetails(projectId);
-      if (!res.data.success) {
-        throw new Error(res.data.message || "Failed to load project details");
-      }
-      return res.data.project;
-    },
-    enabled: !!projectId,
-  });
+  queryKey: ["project-details", projectId],
+  queryFn: async () => {
+    const res = await ApiData.Project.getProjectDetails(projectId);
+    if (!res.data.success || !res.data.project) {
+      throw new Error(res.data.message || "Failed to load project details");
+    }
+    return res.data.project; // now guaranteed to be Project
+  },
+  enabled: !!projectId,
+});
+
 
   // =========================
   // GET JOINED PROJECTS

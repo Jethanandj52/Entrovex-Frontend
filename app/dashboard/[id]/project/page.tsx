@@ -9,14 +9,14 @@ import { FaUser, FaUserPlus, FaTwitter, FaLinkedin, FaGithub } from "react-icons
 
 // -------------------- INTERFACES --------------------
 interface Member {
-  _id?: string;
+  _id: string;
   username: string;
   email: string;
   isAdmin?: boolean;
 }
 
 interface Project {
-  _id?: string; // optional for safe assignment
+  _id: string;
   title: string;
   description?: string;
   color?: string;
@@ -30,17 +30,11 @@ interface Project {
 // -------------------- MAIN COMPONENT --------------------
 export default function ProjectDetailsPage() {
   const params = useParams();
-  const projectId = params.id; // could be undefined
+  const projectId = params.id as string;
   const { openInviteModal } = useModal();
-
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
-  // Only run hook if projectId exists
-  const { projectDetailsQuery } = useProjects(projectId || "");
-
-  if (!projectId) {
-    return <div className="text-red-500 p-4">Invalid Project ID</div>;
-  }
+  const { projectDetailsQuery } = useProjects(projectId);
 
   if (projectDetailsQuery.isLoading) {
     return (
@@ -68,19 +62,8 @@ export default function ProjectDetailsPage() {
   }
 
   // ---------------- SAFE ASSIGNMENT ----------------
-  const projectData = projectDetailsQuery.data;
-  if (!projectData) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-purple-300 animate-pulse">Loading project...</div>
-      </div>
-    );
-  }
+  const project: Project = projectDetailsQuery.data as Project; // cast safe after queryFn check
 
-  // Safe type assertion
-  const project: Project = projectData as Project;
-
-  // ---------------- ALL MEMBERS ----------------
   const allMembers: Member[] = [
     { ...project.createdBy, isAdmin: true },
     ...(project.teamMembers || []),
@@ -108,7 +91,7 @@ export default function ProjectDetailsPage() {
           <div className="flex -space-x-2">
             {allMembers.map((member) => (
               <div
-                key={member._id || member.email}
+                key={member._id}
                 className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-purple-900 text-white cursor-pointer ${
                   member.isAdmin ? "bg-red-500" : "bg-blue-500"
                 }`}
@@ -122,7 +105,7 @@ export default function ProjectDetailsPage() {
 
           <button
             onClick={() => {
-              localStorage.setItem("currentProjectId", projectId);
+              localStorage.setItem("currentProjectId", project._id);
               openInviteModal();
             }}
             className="px-4 py-2 flex items-center gap-2 glass-effect rounded-lg hover:bg-white/20 transition-all cursor-pointer"
@@ -145,7 +128,7 @@ export default function ProjectDetailsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {allMembers.map((member) => (
           <MemberCard
-            key={member._id || member.email}
+            key={member._id}
             member={member}
             onClick={() => setSelectedMember(member)}
           />
@@ -155,8 +138,7 @@ export default function ProjectDetailsPage() {
       {/* KANBAN BOARD */}
       <div className="mt-8">
         <h2 className="text-xl md:text-2xl font-bold mb-4">Project Tasks</h2>
-        {/* Safe rendering: only if projectId exists */}
-        {projectId && <KanbanBoard projectId ={projectId} members={allMembers} />}
+        {project._id && <KanbanBoard projectId={project._id} members={allMembers} />}
       </div>
 
       {/* MEMBER DETAIL MODAL */}
@@ -169,7 +151,6 @@ export default function ProjectDetailsPage() {
             className="bg-gradient-to-br from-purple-800 to-purple-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex items-center gap-4 mb-4">
               <div
                 className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold ${
@@ -200,7 +181,6 @@ export default function ProjectDetailsPage() {
               </a>
             </div>
 
-            {/* Close Button */}
             <button
               className="mt-2 w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
               onClick={() => setSelectedMember(null)}
