@@ -7,14 +7,15 @@ import { useTasks } from "@/lib/hooks/useTasks";
 import axios from "axios";
 import { Task } from "@/types/task";
 
-interface Member {
+// -------------------- TYPES --------------------
+export interface Member {
   _id: string;
   username: string;
   email: string;
   isAdmin?: boolean;
 }
 
-interface TaskInput {
+export interface TaskInput {
   title: string;
   description: string;
   assignedTo: string;
@@ -23,13 +24,18 @@ interface TaskInput {
   status?: string;
 }
 
-export default function KanbanBoard() {
-  const projectId = localStorage.getItem("currentProjectId") || "";
+interface KanbanBoardProps {
+  projectId: string;
+  members: Member[];
+}
+
+// -------------------- MAIN COMPONENT --------------------
+const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId, members: propMembers }) => {
   const { tasksQuery, updateTaskStatus } = useTasks(projectId);
 
   const [isDragging, setIsDragging] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<Member[]>(propMembers || []);
   const [taskInput, setTaskInput] = useState<TaskInput>({
     title: "",
     description: "",
@@ -37,9 +43,9 @@ export default function KanbanBoard() {
     dueDate: "",
     priority: "normal",
   });
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const [editingTask, setEditingTask] = useState<Task | null>(null); // ✅ edit mode
-
+  // -------------------- FETCH PROJECT MEMBERS --------------------
   useEffect(() => {
     const fetchProject = async () => {
       if (!projectId) return;
@@ -57,7 +63,7 @@ export default function KanbanBoard() {
             email: project.createdBy.email,
             isAdmin: true
           },
-          ...project.teamMembers
+          ...(project.teamMembers || [])
         ];
 
         setMembers(allMembers);
@@ -68,6 +74,7 @@ export default function KanbanBoard() {
     fetchProject();
   }, [projectId]);
 
+  // -------------------- HANDLE BODY SCROLL DURING DRAG --------------------
   useEffect(() => {
     if (isDragging) {
       document.body.classList.add("dragging-active");
@@ -82,6 +89,7 @@ export default function KanbanBoard() {
     };
   }, [isDragging]);
 
+  // -------------------- LOADING & ERROR --------------------
   if (tasksQuery.isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -93,14 +101,15 @@ export default function KanbanBoard() {
   if (tasksQuery.isError) {
     return (
       <div className="text-red-400 p-4 bg-red-500/10 rounded">
-        Error loading tasks: {tasksQuery.error.message}
+        Error loading tasks: {(tasksQuery.error as any)?.message || "Unknown error"}
       </div>
     );
   }
 
   const tasks = tasksQuery.data || [];
 
-  const columnData = {
+  // -------------------- COLUMNS --------------------
+  const columnData: Record<string, Task[]> = {
     todo: tasks.filter((task) => task.status === "todo"),
     inprocess: tasks.filter((task) => task.status === "inprocess"),
     completed: tasks.filter((task) => task.status === "completed"),
@@ -118,10 +127,7 @@ export default function KanbanBoard() {
     setIsDragging(false);
     const { source, destination, draggableId } = result;
     if (!destination) return;
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    )
+    if (source.droppableId === destination.droppableId && source.index === destination.index)
       return;
 
     updateTaskStatus.mutate({
@@ -130,6 +136,7 @@ export default function KanbanBoard() {
     });
   };
 
+  // -------------------- HANDLERS --------------------
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setTaskInput({ ...taskInput, [e.target.name]: e.target.value });
   };
@@ -160,19 +167,13 @@ export default function KanbanBoard() {
 
     try {
       if (editingTask) {
-        // UPDATE
-        await axios.put(
-          `http://localhost:5000/tasks/update/${editingTask._id}`,
-          taskInput,
-          { withCredentials: true }
-        );
+        await axios.put(`http://localhost:5000/tasks/update/${editingTask._id}`, taskInput, {
+          withCredentials: true,
+        });
       } else {
-        // CREATE
-        await axios.post(
-          "http://localhost:5000/tasks/create",
-          { ...taskInput, projectId },
-          { withCredentials: true }
-        );
+        await axios.post(`http://localhost:5000/tasks/create`, { ...taskInput, projectId }, {
+          withCredentials: true,
+        });
       }
 
       setShowTaskModal(false);
@@ -187,8 +188,7 @@ export default function KanbanBoard() {
 
   const handleDeleteTask = async () => {
     if (!editingTask) return;
-    const confirmDelete = confirm("Are you sure you want to delete this task?");
-    if (!confirmDelete) return;
+    if (!confirm("Are you sure you want to delete this task?")) return;
 
     try {
       await axios.delete(`http://localhost:5000/tasks/delete/${editingTask._id}`, { withCredentials: true });
@@ -202,6 +202,7 @@ export default function KanbanBoard() {
     }
   };
 
+  // -------------------- JSX --------------------
   return (
     <div className={`${isDragging ? "select-none" : ""}`}>
       <button
@@ -210,6 +211,7 @@ export default function KanbanBoard() {
       >
         + Create Task
       </button>
+
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Object.keys(columnData).map((columnId) => (
@@ -311,4 +313,6 @@ export default function KanbanBoard() {
       )}
     </div>
   );
-}
+};
+
+export default KanbanBoard;

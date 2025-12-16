@@ -16,7 +16,7 @@ interface Member {
 }
 
 interface Project {
-  _id: string;
+  _id?: string; // optional for safe assignment
   title: string;
   description?: string;
   color?: string;
@@ -30,12 +30,17 @@ interface Project {
 // -------------------- MAIN COMPONENT --------------------
 export default function ProjectDetailsPage() {
   const params = useParams();
-  const projectId = params.id as string;
+  const projectId = params.id; // could be undefined
   const { openInviteModal } = useModal();
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
-  const { projectDetailsQuery } = useProjects(projectId);
+  // Only run hook if projectId exists
+  const { projectDetailsQuery } = useProjects(projectId || "");
+
+  if (!projectId) {
+    return <div className="text-red-500 p-4">Invalid Project ID</div>;
+  }
 
   if (projectDetailsQuery.isLoading) {
     return (
@@ -62,9 +67,20 @@ export default function ProjectDetailsPage() {
     );
   }
 
-  const project: Project = projectDetailsQuery.data;
+  // ---------------- SAFE ASSIGNMENT ----------------
+  const projectData = projectDetailsQuery.data;
+  if (!projectData) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-purple-300 animate-pulse">Loading project...</div>
+      </div>
+    );
+  }
 
-  // **allMembers me sirf team members + createdBy (admin) rakhe, invitedMembers ignore**
+  // Safe type assertion
+  const project: Project = projectData as Project;
+
+  // ---------------- ALL MEMBERS ----------------
   const allMembers: Member[] = [
     { ...project.createdBy, isAdmin: true },
     ...(project.teamMembers || []),
@@ -139,9 +155,8 @@ export default function ProjectDetailsPage() {
       {/* KANBAN BOARD */}
       <div className="mt-8">
         <h2 className="text-xl md:text-2xl font-bold mb-4">Project Tasks</h2>
-        <KanbanBoard projectId={projectId} members={allMembers} />
-    
-    
+        {/* Safe rendering: only if projectId exists */}
+        {projectId && <KanbanBoard projectId ={projectId} members={allMembers} />}
       </div>
 
       {/* MEMBER DETAIL MODAL */}
@@ -174,25 +189,13 @@ export default function ProjectDetailsPage() {
 
             {/* Social Icons */}
             <div className="flex gap-4 mb-4">
-              <a
-                href="#"
-                className="text-blue-400 hover:text-blue-600 transition-colors"
-                title="Twitter"
-              >
+              <a href="#" className="text-blue-400 hover:text-blue-600 transition-colors" title="Twitter">
                 <FaTwitter size={20} />
               </a>
-              <a
-                href="#"
-                className="text-blue-400 hover:text-blue-600 transition-colors"
-                title="LinkedIn"
-              >
+              <a href="#" className="text-blue-400 hover:text-blue-600 transition-colors" title="LinkedIn">
                 <FaLinkedin size={20} />
               </a>
-              <a
-                href="#"
-                className="text-blue-400 hover:text-blue-600 transition-colors"
-                title="GitHub"
-              >
+              <a href="#" className="text-blue-400 hover:text-blue-600 transition-colors" title="GitHub">
                 <FaGithub size={20} />
               </a>
             </div>
