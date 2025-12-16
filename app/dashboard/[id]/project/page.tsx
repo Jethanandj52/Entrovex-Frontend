@@ -7,7 +7,7 @@ import { useProjects } from "@/lib/hooks/useProject";
 import { useModal } from "@/context/Global";
 import { FaUser, FaUserPlus, FaTwitter, FaLinkedin, FaGithub } from "react-icons/fa";
 
-// -------------------- INTERFACES --------------------
+// ===================== INTERFACES =====================
 interface Member {
   _id: string;
   username: string;
@@ -27,7 +27,7 @@ interface Project {
   invitedMembers?: { email: string; status: string }[];
 }
 
-// -------------------- MAIN COMPONENT --------------------
+// ===================== MAIN COMPONENT =====================
 export default function ProjectDetailsPage() {
   const params = useParams();
   const projectId = params.id as string;
@@ -36,6 +36,7 @@ export default function ProjectDetailsPage() {
 
   const { projectDetailsQuery } = useProjects(projectId);
 
+  // ----------------- LOADING -----------------
   if (projectDetailsQuery.isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -44,6 +45,7 @@ export default function ProjectDetailsPage() {
     );
   }
 
+  // ----------------- ERROR -----------------
   if (projectDetailsQuery.isError || !projectDetailsQuery.data) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -61,9 +63,21 @@ export default function ProjectDetailsPage() {
     );
   }
 
-  // ---------------- SAFE ASSIGNMENT ----------------
-  const project: Project = projectDetailsQuery.data as Project; // cast safe after queryFn check
+  // ----------------- SAFE ASSIGNMENT -----------------
+const project: Project = {
+  _id: projectDetailsQuery.data!._id || "",
+  title: projectDetailsQuery.data!.title || "Untitled Project",
+  description: projectDetailsQuery.data!.description || "",
+  color: projectDetailsQuery.data!.color || "#7e22ce",
+  createdBy: projectDetailsQuery.data!.createdBy ?? { _id: "", username: "Unknown", email: "unknown@example.com" },
+  teamMembers: projectDetailsQuery.data!.teamMembers || [],
+  invitedMembers: projectDetailsQuery.data!.invitedMembers || [],
+   
+  createdAt: projectDetailsQuery.data!.createdAt || new Date().toISOString(),
+  updatedAt: projectDetailsQuery.data!.updatedAt || new Date().toISOString(),
+};
 
+// safe, already checked above
   const allMembers: Member[] = [
     { ...project.createdBy, isAdmin: true },
     ...(project.teamMembers || []),
@@ -138,7 +152,7 @@ export default function ProjectDetailsPage() {
       {/* KANBAN BOARD */}
       <div className="mt-8">
         <h2 className="text-xl md:text-2xl font-bold mb-4">Project Tasks</h2>
-        {project._id && <KanbanBoard projectId={project._id} members={allMembers} />}
+        <KanbanBoard projectId={project._id} members={allMembers} />
       </div>
 
       {/* MEMBER DETAIL MODAL */}
@@ -194,7 +208,7 @@ export default function ProjectDetailsPage() {
   );
 }
 
-// -------------------- MEMBER CARD COMPONENT --------------------
+// ===================== MEMBER CARD COMPONENT =====================
 function MemberCard({ member, onClick }: { member: Member; onClick?: () => void }) {
   return (
     <div
@@ -235,7 +249,7 @@ function MemberCard({ member, onClick }: { member: Member; onClick?: () => void 
   );
 }
 
-// -------------------- STAT COMPONENT --------------------
+// ===================== STAT COMPONENT =====================
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-white/5 rounded-lg p-4">

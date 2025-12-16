@@ -1,27 +1,23 @@
 // =========================
 // Project Type
 // =========================
+export interface Member {
+  _id: string;  // mandatory
+  username: string;
+  email: string;
+  isAdmin?: boolean;
+}
+
 export interface Project {
-  _id?: string; // optional to prevent Vercel build error
-  name: string; // frontend name
-  title?: string; // backend title
+  _id: string;
+  name: string;
+  title?: string;
   description: string;
   color: string;
-  members: string; // comma separated emails for input
-  createdBy?: {
-    _id?: string;
-    username: string;
-    email: string;
-  };
-  teamMembers?: {
-    _id?: string;
-    username: string;
-    email: string;
-  }[];
-  invitedMembers?: {
-    email: string;
-    status: "pending" | "accepted" | "rejected";
-  }[];
+  members?: string; // optional now
+  createdBy: Member;
+  teamMembers?: Member[];
+  invitedMembers?: { email: string; status: "pending" | "accepted" | "rejected" }[];
   status?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -56,5 +52,5 @@ export interface ProjectsResponse {
 export interface SingleProjectResponse {
   success: boolean;
   message: string;
-  project?: Project; // optional to handle undefined safely
+  project: Project; // mandatory now to avoid undefined errors
 }

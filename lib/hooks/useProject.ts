@@ -19,7 +19,11 @@ export const useProjects = (projectId?: string) => {
       if (!res.data.success) {
         throw new Error(res.data.message || "Failed to fetch projects");
       }
-      return res.data.projects;
+      return res.data.projects.map((p:any) => ({
+        ...p,
+        _id: p._id || "",
+        createdBy: p.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+      }));
     },
   });
 
@@ -27,17 +31,31 @@ export const useProjects = (projectId?: string) => {
   // GET PROJECT DETAILS
   // =========================
   const projectDetailsQuery = useQuery<Project>({
-  queryKey: ["project-details", projectId],
-  queryFn: async () => {
-    const res = await ApiData.Project.getProjectDetails(projectId);
-    if (!res.data.success || !res.data.project) {
-      throw new Error(res.data.message || "Failed to load project details");
-    }
-    return res.data.project; // now guaranteed to be Project
-  },
-  enabled: !!projectId,
-});
+    queryKey: ["project-details", projectId],
+    queryFn: async () => {
+      const res = await ApiData.Project.getProjectDetails(projectId);
+      if (!res.data.success || !res.data.project) {
+        throw new Error(res.data.message || "Failed to load project details");
+      }
 
+      const project: Project = {
+        ...res.data.project,
+        _id: res.data.project._id || "",
+        createdBy: res.data.project.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+        teamMembers: res.data.project.teamMembers || [],
+        invitedMembers: res.data.project.invitedMembers || [],
+        description: res.data.project.description || "",
+        color: res.data.project.color || "#7e22ce",
+        members: res.data.project.members || "",
+        status: res.data.project.status || "Active",
+        createdAt: res.data.project.createdAt || new Date().toISOString(),
+        updatedAt: res.data.project.updatedAt || new Date().toISOString(),
+      };
+
+      return project;
+    },
+    enabled: !!projectId,
+  });
 
   // =========================
   // GET JOINED PROJECTS
@@ -45,11 +63,16 @@ export const useProjects = (projectId?: string) => {
   const joinedProjectsQuery = useQuery<Project[]>({
     queryKey: ["joined-projects"],
     queryFn: async () => {
-      const res = await ApiData.Project.getJoinedprojects();
+      // Agar getJoinedprojects argument expect karta hai, yahan userId pass karo
+      const res = await ApiData.Project.getJoinedprojects(projectId);
       if (!res.data.success) {
         throw new Error(res.data.message || "Failed to load joined projects");
       }
-      return res.data.projects;
+      return res.data.projects.map((p) => ({
+        ...p,
+        _id: p._id || "",
+        createdBy: p.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+      }));
     },
   });
 
@@ -59,16 +82,18 @@ export const useProjects = (projectId?: string) => {
   const createProject = useMutation({
     mutationFn: async (data: CreateProjectInput): Promise<Project> => {
       const res = await ApiData.Project.createProject(data);
-      if (!res.data.success) {
+      if (!res.data.success || !res.data.project) {
         throw new Error(res.data.message || "Failed to create project");
       }
-      return res.data.project;
+
+      return {
+        ...res.data.project,
+        _id: res.data.project._id || "",
+        createdBy: res.data.project.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+      };
     },
     onSuccess: (newProject) => {
-      queryClient.setQueryData<Project[]>(["projects"], (old = []) => [
-        ...old,
-        newProject,
-      ]);
+      queryClient.setQueryData<Project[]>(["projects"], (old = []) => [...old, newProject]);
     },
   });
 
@@ -84,10 +109,15 @@ export const useProjects = (projectId?: string) => {
       data: UpdateProjectInput;
     }): Promise<Project> => {
       const res = await ApiData.Project.updateProject(data, id);
-      if (!res.data.success) {
+      if (!res.data.success || !res.data.project) {
         throw new Error(res.data.message || "Failed to update project");
       }
-      return res.data.project;
+
+      return {
+        ...res.data.project,
+        _id: res.data.project._id || "",
+        createdBy: res.data.project.createdBy || { _id: "", username: "Unknown", email: "unknown@example.com" },
+      };
     },
     onSuccess: (updated) => {
       queryClient.setQueryData<Project[]>(["projects"], (old = []) =>
@@ -108,9 +138,7 @@ export const useProjects = (projectId?: string) => {
       return id;
     },
     onSuccess: (id) => {
-      queryClient.setQueryData<Project[]>(["projects"], (old = []) =>
-        old.filter((p) => p._id !== id)
-      );
+      queryClient.setQueryData<Project[]>(["projects"], (old = []) => old.filter((p) => p._id !== id));
     },
   });
 
