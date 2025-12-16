@@ -1,5 +1,8 @@
+// =========================
+// Project Type
+// =========================
 export interface Project {
-  _id?: string;
+  _id?: string; // optional to prevent Vercel build error
   name: string; // frontend name
   title?: string; // backend title
   description: string;
@@ -24,7 +27,9 @@ export interface Project {
   updatedAt?: string;
 }
 
-
+// =========================
+// Input Types
+// =========================
 export interface CreateProjectInput {
   name: string;
   description: string;
@@ -39,15 +44,17 @@ export interface UpdateProjectInput {
   members?: string; // Or string[] depending on your form
 }
 
-// API Response types
+// =========================
+// API Response Types
+// =========================
 export interface ProjectsResponse {
   success: boolean;
   message: string;
-  projects: Project[];
+  projects: Project[]; // always array
 }
 
 export interface SingleProjectResponse {
   success: boolean;
   message: string;
-  project: Project;
+  project?: Project; // optional to handle undefined safely
 }
