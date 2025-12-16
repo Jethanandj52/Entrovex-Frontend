@@ -1,0 +1,124 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ApiData from "@/api/project";
+import {
+  Project,
+  CreateProjectInput,
+  UpdateProjectInput,
+} from "@/types/project";
+
+export const useProjects = (projectId?: string) => {
+  const queryClient = useQueryClient();
+
+  // =========================
+  // GET ALL PROJECTS
+  // =========================
+  const projectsQuery = useQuery<Project[]>({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const res = await ApiData.Project.getProject();
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Failed to fetch projects");
+      }
+      return res.data.projects;
+    },
+  });
+
+  // =========================
+  // GET PROJECT DETAILS
+  // =========================
+  const projectDetailsQuery = useQuery<Project>({
+    queryKey: ["project-details", projectId],
+    queryFn: async () => {
+      const res = await ApiData.Project.getProjectDetails(projectId);
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Failed to load project details");
+      }
+      return res.data.project;
+    },
+    enabled: !!projectId,
+  });
+
+  // =========================
+  // GET JOINED PROJECTS
+  // =========================
+  const joinedProjectsQuery = useQuery<Project[]>({
+    queryKey: ["joined-projects"],
+    queryFn: async () => {
+      const res = await ApiData.Project.getJoinedprojects();
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Failed to load joined projects");
+      }
+      return res.data.projects;
+    },
+  });
+
+  // =========================
+  // CREATE PROJECT
+  // =========================
+  const createProject = useMutation({
+    mutationFn: async (data: CreateProjectInput): Promise<Project> => {
+      const res = await ApiData.Project.createProject(data);
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Failed to create project");
+      }
+      return res.data.project;
+    },
+    onSuccess: (newProject) => {
+      queryClient.setQueryData<Project[]>(["projects"], (old = []) => [
+        ...old,
+        newProject,
+      ]);
+    },
+  });
+
+  // =========================
+  // UPDATE PROJECT
+  // =========================
+  const updateProject = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateProjectInput;
+    }): Promise<Project> => {
+      const res = await ApiData.Project.updateProject(data, id);
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Failed to update project");
+      }
+      return res.data.project;
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Project[]>(["projects"], (old = []) =>
+        old.map((p) => (p._id === updated._id ? updated : p))
+      );
+    },
+  });
+
+  // =========================
+  // DELETE PROJECT
+  // =========================
+  const deleteProject = useMutation({
+    mutationFn: async (id: string): Promise<string> => {
+      const res = await ApiData.Project.deleteProject(id);
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Failed to delete project");
+      }
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.setQueryData<Project[]>(["projects"], (old = []) =>
+        old.filter((p) => p._id !== id)
+      );
+    },
+  });
+
+  return {
+    projectsQuery,
+    projectDetailsQuery,
+    joinedProjectsQuery,
+    createProject,
+    updateProject,
+    deleteProject,
+  };
+};
