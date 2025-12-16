@@ -6,12 +6,12 @@ export interface Project {
   color: string;
   members: string; // comma separated emails for input
   createdBy?: {
-    _id: string;
+    _id?: string;
     username: string;
     email: string;
   };
   teamMembers?: {
-    _id: string;
+    _id?: string;
     username: string;
     email: string;
   }[];
